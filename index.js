@@ -52,7 +52,7 @@ app.get("/pay", async function (req, res, next) {
 
   try {
     const response = await axios.post(
-      `${PHONE_PE_HOST_URL}/pg/v1/pay`,
+      `${PHONE_PE_HOST_URL}/v1/pay`,
       {
         request: base64EncodedPayload,
       },
@@ -73,7 +73,7 @@ app.get("/pay", async function (req, res, next) {
 app.get("/payment/validate/:merchantTransactionId", async function (req, res) {
   const { merchantTransactionId } = req.params;
   if (merchantTransactionId) {
-    let statusUrl = `${PHONE_PE_HOST_URL}/pg/v1/status/${MERCHANT_ID}/${merchantTransactionId}`;
+    let statusUrl = `${PHONE_PE_HOST_URL}/v1/status/${MERCHANT_ID}/${merchantTransactionId}`;
 
     let string = `/pg/v1/status/${MERCHANT_ID}/${merchantTransactionId}` + SALT_KEY;
     let sha256_val = sha256(string);
