@@ -52,6 +52,7 @@ app.post("/pay", async (req, res) => {
       expireAfter: 1200,
       paymentFlow: {
         type: "PG_CHECKOUT",
+        message: "Payment message used for collect requests",
         merchantUrls: {
           redirectUrl: `${redirectUrl}/${merchantOrderId}`,
         },
@@ -66,7 +67,7 @@ app.post("/pay", async (req, res) => {
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `O-Bearer ${accessToken}`,
         },
       }
     );
