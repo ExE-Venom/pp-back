@@ -9,6 +9,10 @@ app.use(express.json());
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.get("/", (req, res) => {
+  res.send("Welcome to the PhonePe Payment API");
+}
+
 app.post("/pay", async (req, res) => {
   const { amount } = req.body;
   const merchantOrderId = `ORDER-${Date.now()}`;
@@ -85,16 +89,16 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
   const { merchantOrderId } = req.params;
   if (!merchantOrderId) {
     console.error("Missing merchantOrderId");
-    return res.redirect(`${process.env.APP_FE_URL || "https://pay.rexzbot.xyz"}/payment/status/ERROR`);
+    return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/ERROR`);
   }
 
   try {
     // Optional: Implement status check if PhonePe provides a status API
     // For now, redirect to frontend for status handling
-    res.redirect(`${process.env.APP_FE_URL || "https://pay.rexzbot.xyz"}/payment/status/PAYMENT_SUCCESS`);
+    res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/PAYMENT_SUCCESS`);
   } catch (error) {
     console.error("Status error:", error.message);
-    res.redirect(`${process.env.APP_FE_URL || "https://pay.rexzbot.xyz"}/payment/status/ERROR`);
+    res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/ERROR`);
   }
 });
 
