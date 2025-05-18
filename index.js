@@ -6,12 +6,7 @@ require("dotenv").config();
 
 const app = express();
 app.use(express.json());
-app.use(
-  cors({
-    origin: "*",
-    optionsSuccessStatus: 200,
-  })
-);
+app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.post("/pay", async (req, res) => {
