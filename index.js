@@ -144,12 +144,30 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
     return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/ERROR`);
   }
 
+  
+    // Step 1: Obtain OAuth token
+    const tokenResponse = await axios.post(
+      "https://api.phonepe.com/apis/identity-manager/v1/oauth/token",
+      new URLSearchParams({
+        client_id: process.env.PHONEPE_CLIENT_ID,
+        client_secret: process.env.PHONEPE_CLIENT_SECRET,
+        grant_type: "client_credentials",
+      }),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+
+    const accessToken = tokenResponse.data.access_token;
+
   const response = await axios.get(
     `https://api.phonepe.com/apis/pg/checkout/v2/order/${merchantOrderId}/status`,
     {
       headers: {
         "Content-Type": "application/json",
-        Authorization: `O-Bearer ${process.env.PHONEPE_ACCESS_TOKEN}`,
+        Authorization: `O-Bearer ${accessToken}`,
       },
     }
   );
