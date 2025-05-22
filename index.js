@@ -144,23 +144,23 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
     return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/ERROR`);
   }
 
-  
-    // Step 1: Obtain OAuth token
-    const tokenResponse = await axios.post(
-      "https://api.phonepe.com/apis/identity-manager/v1/oauth/token",
-      new URLSearchParams({
-        client_id: process.env.PHONEPE_CLIENT_ID,
-        client_secret: process.env.PHONEPE_CLIENT_SECRET,
-        grant_type: "client_credentials",
-      }),
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      }
-    );
 
-    const accessToken = tokenResponse.data.access_token;
+  // Step 1: Obtain OAuth token
+  const tokenResponse = await axios.post(
+    "https://api.phonepe.com/apis/identity-manager/v1/oauth/token",
+    new URLSearchParams({
+      client_id: process.env.PHONEPE_CLIENT_ID,
+      client_secret: process.env.PHONEPE_CLIENT_SECRET,
+      grant_type: "client_credentials",
+    }),
+    {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    }
+  );
+
+  const accessToken = tokenResponse.data.access_token;
 
   const response = await axios.get(
     `https://api.phonepe.com/apis/pg/checkout/v2/order/${merchantOrderId}/status`,
@@ -171,18 +171,51 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
       },
     }
   );
-  console.log("Payment Status Response:", JSON.stringify(response.data, null, 2));
+
   const status = response.data.state;
   const TxnId = response.data?.toObject().paymentDetails?.transactionId;
-  console.log("Payment Status:", status);
-  console.log("Transaction ID:", TxnId);
+  const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL;
+
   if (status === "COMPLETED") {
+    // Handle successful payment
+    // SEND LOGS VIA DISCORD_WEBHOOK_URL
+    if (discordWebhookUrl) {
+      const discordMessage = {
+        content: `✅ Payment Successful! ✅\n\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`,
+      };
+      await axios.post(discordWebhookUrl, discordMessage);
+    }
+
     return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/PAYMENT_SUCCESS?TxnId=${TxnId}&merchantOrderId=${merchantOrderId}`);
   } else if (status === "FAILED") {
+    // Handle failed payment
+    // SEND LOGS VIA DISCORD_WEBHOOK_URL
+    if (discordWebhookUrl) {
+      const discordMessage = {
+        content: `❌ Payment Failed! ❌\n\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`,
+      };
+      await axios.post(discordWebhookUrl, discordMessage);
+    }
     return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/PAYMENT_ERROR?TxnId=${TxnId}&merchantOrderId=${merchantOrderId}`);
   } else if (status === "PENDING") {
+    // Handle pending payment
+    // SEND LOGS VIA DISCORD_WEBHOOK_URL
+    if (discordWebhookUrl) {
+      const discordMessage = {
+        content: `⏳ Payment Pending! ⏳\n\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`,
+      };
+      await axios.post(discordWebhookUrl, discordMessage);
+    }
     return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/PAYMENT_PENDING?TxnId=${TxnId}&merchantOrderId=${merchantOrderId}`);
   } else {
+    // Handle unknown status
+    // SEND LOGS VIA DISCORD_WEBHOOK_URL
+    if (discordWebhookUrl) {
+      const discordMessage = {
+        content: `❓ Unknown Payment Status! ❓\n\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`,
+      };
+      await axios.post(discordWebhookUrl, discordMessage);
+    }
     return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/ERROR?TxnId=${TxnId}&merchantOrderId=${merchantOrderId}`);
   }
 });
