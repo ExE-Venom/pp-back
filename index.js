@@ -3,7 +3,6 @@ const axios = require("axios");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const crypto = require("crypto");
-const { WebhookClient } = require("discord.js");
 require("dotenv").config();
 
 const app = express();
@@ -177,7 +176,6 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
   const status = data.state;
   const TxnId = data?.paymentDetails?.transactionId;
   const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL;
-      const webhookClient = new WebhookClient({ url: discordWebhookUrl });
 
   if (status === "COMPLETED") {
     // Handle successful payment
@@ -187,9 +185,15 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
         content: `✅ Payment Successful! @here ✅\n\n**Amount:** ${data.amount / 100},\n**Transaction ID:** ${TxnId},\n**Order ID:** ${merchantOrderId}\n**Time:** ${new Date().toLocaleString()}`,
       };
       const payload = JSON.stringify(discordMessage);
-      await webhookClient.send({
+      await axios.post(discordWebhookUrl, {
         content: payload.content
-      });
+      })
+        .then(response => {
+          console.log('Message sent:', response.status);
+        })
+        .catch(error => {
+          console.error('Error sending message:', error);
+        });
     }
 
     return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/PAYMENT_SUCCESS?TxnId=${TxnId}&merchantOrderId=${merchantOrderId}`);
@@ -200,9 +204,15 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
       const discordMessage = {
         content: `❌ Payment Failed! ❌\n\nAmount: ${data.amount / 100},\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`,
       };
-      await webhookClient.send({
+      await axios.post(discordWebhookUrl, {
         content: discordMessage.content
-      });
+      })
+        .then(response => {
+          console.log('Message sent:', response.status);
+        })
+        .catch(error => {
+          console.error('Error sending message:', error);
+        });
     }
     return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/PAYMENT_ERROR?TxnId=${TxnId}&merchantOrderId=${merchantOrderId}`);
   } else if (status === "PENDING") {
@@ -212,9 +222,15 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
       const discordMessage = {
         content: `⏳ Payment Pending! ⏳\n\nAmount: ${data.amount / 100},\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`,
       };
-      await webhookClient.send({
+      await axios.post(discordWebhookUrl, {
         content: discordMessage.content
-      });
+      })
+        .then(response => {
+          console.log('Message sent:', response.status);
+        })
+        .catch(error => {
+          console.error('Error sending message:', error);
+        });
     }
     return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/PAYMENT_PENDING?TxnId=${TxnId}&merchantOrderId=${merchantOrderId}`);
   } else {
@@ -224,9 +240,15 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
       const discordMessage = {
         content: `❓ Unknown Payment Status! ❓\n\nAmount: ${data.amount / 100},\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`,
       };
-      await webhookClient.send({
+      await axios.post(discordWebhookUrl, {
         content: discordMessage.content
-      });
+      })
+        .then(response => {
+          console.log('Message sent:', response.status);
+        })
+        .catch(error => {
+          console.error('Error sending message:', error);
+        });
     }
     return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/ERROR?TxnId=${TxnId}&merchantOrderId=${merchantOrderId}`);
   }
