@@ -177,6 +177,7 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
   const status = data.state;
   const TxnId = data?.paymentDetails?.transactionId;
   const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL;
+      const webhookClient = new WebhookClient({ url: discordWebhookUrl });
 
   if (status === "COMPLETED") {
     // Handle successful payment
@@ -186,7 +187,6 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
         content: `✅ Payment Successful! @here ✅\n\n**Amount:** ${data.amount / 100},\n**Transaction ID:** ${TxnId},\n**Order ID:** ${merchantOrderId}\n**Time:** ${new Date().toLocaleString()}`,
       };
       const payload = JSON.stringify(discordMessage);
-      const webhookClient = new WebhookClient({ url: discordWebhookUrl });
       await webhookClient.send({
         content: payload.content
       });
@@ -200,7 +200,9 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
       const discordMessage = {
         content: `❌ Payment Failed! ❌\n\nAmount: ${data.amount / 100},\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`,
       };
-      await axios.post(discordWebhookUrl, discordMessage);
+      await webhookClient.send({
+        content: discordMessage.content
+      });
     }
     return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/PAYMENT_ERROR?TxnId=${TxnId}&merchantOrderId=${merchantOrderId}`);
   } else if (status === "PENDING") {
@@ -210,7 +212,9 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
       const discordMessage = {
         content: `⏳ Payment Pending! ⏳\n\nAmount: ${data.amount / 100},\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`,
       };
-      await axios.post(discordWebhookUrl, discordMessage);
+      await webhookClient.send({
+        content: discordMessage.content
+      });
     }
     return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/PAYMENT_PENDING?TxnId=${TxnId}&merchantOrderId=${merchantOrderId}`);
   } else {
@@ -220,7 +224,9 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
       const discordMessage = {
         content: `❓ Unknown Payment Status! ❓\n\nAmount: ${data.amount / 100},\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`,
       };
-      await axios.post(discordWebhookUrl, discordMessage);
+      await webhookClient.send({
+        content: discordMessage.content
+      });
     }
     return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/ERROR?TxnId=${TxnId}&merchantOrderId=${merchantOrderId}`);
   }
