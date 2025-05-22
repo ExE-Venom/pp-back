@@ -3,6 +3,7 @@ const axios = require("axios");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const crypto = require("crypto");
+const { WebhookClient } = require("discord.js");
 require("dotenv").config();
 
 const app = express();
@@ -182,17 +183,13 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
     // SEND LOGS VIA DISCORD_WEBHOOK_URL
     if (discordWebhookUrl) {
       const discordMessage = {
-        content: `✅ Payment Successful! ✅\n\n**Amount:** ${data.amount / 100},\n**Transaction ID:** ${TxnId},\n**Order ID:** ${merchantOrderId}\n**Time:** ${new Date().toLocaleString()}`,
+        content: `✅ Payment Successful! @here ✅\n\n**Amount:** ${data.amount / 100},\n**Transaction ID:** ${TxnId},\n**Order ID:** ${merchantOrderId}\n**Time:** ${new Date().toLocaleString()}`,
       };
       const payload = JSON.stringify(discordMessage);
-      await axios.post(discordWebhookUrl, 
-        payload,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const webhookClient = new WebhookClient({ url: discordWebhookUrl });
+      await webhookClient.send({
+        content: payload.content
+      });
     }
 
     return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/PAYMENT_SUCCESS?TxnId=${TxnId}&merchantOrderId=${merchantOrderId}`);
