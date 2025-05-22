@@ -182,9 +182,17 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
     // SEND LOGS VIA DISCORD_WEBHOOK_URL
     if (discordWebhookUrl) {
       const discordMessage = {
-        content: `✅ Payment Successful! ✅\n\nAmount: ${data.amount / 100},\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`,
+        content: `✅ Payment Successful! ✅\n\n**Amount:** ${data.amount / 100},\n**Transaction ID:** ${TxnId},\n**Order ID:** ${merchantOrderId}\n**Time:** ${new Date().toLocaleString()}`,
       };
-      await axios.post(discordWebhookUrl, discordMessage);
+      const payload = JSON.stringify(discordMessage);
+      await axios.post(discordWebhookUrl, 
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
     }
 
     return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/PAYMENT_SUCCESS?TxnId=${TxnId}&merchantOrderId=${merchantOrderId}`);
