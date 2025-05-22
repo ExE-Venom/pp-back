@@ -185,21 +185,21 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
   } else if (status === "FAILED") {
     // Handle failed payment
     // SEND LOGS VIA DISCORD_WEBHOOK_URL
-    await sendWebhookMessage(`❌ Payment Failed! ❌\n\nAmount: ${data.amount / 100},\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`);
+    await sendWebhookMessage(`❌ Payment Failed! ❌\n\nAmount: ${data.amount / 100},\nTransaction ID: Null,\nOrder ID: ${merchantOrderId}`);
 
-    return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/PAYMENT_ERROR?TxnId=${TxnId}&merchantOrderId=${merchantOrderId}`);
+    return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/PAYMENT_ERROR?TxnId=Null&merchantOrderId=${merchantOrderId}`);
   } else if (status === "PENDING") {
     // Handle pending payment
     // SEND LOGS VIA DISCORD_WEBHOOK_URL
-    await sendWebhookMessage(`⏳ Payment Pending! ⏳\n\nAmount: ${data.amount / 100},\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`);
+    await sendWebhookMessage(`⏳ Payment Pending! ⏳\n\nAmount: ${data.amount / 100},\nTransaction ID: Null,\nOrder ID: ${merchantOrderId}`);
 
-    return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/PAYMENT_PENDING?TxnId=${TxnId}&merchantOrderId=${merchantOrderId}`);
+    return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/PAYMENT_PENDING?TxnId=Null&merchantOrderId=${merchantOrderId}`);
   } else {
     // Handle unknown status
     // SEND LOGS VIA DISCORD_WEBHOOK_URL
-    await sendWebhookMessage(`❓ Unknown Payment Status! ❓\n\nAmount: ${data.amount / 100},\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`);
+    await sendWebhookMessage(`❓ Unknown Payment Status! ❓\n\nAmount: ${data.amount / 100},\nTransaction ID: Null,\nOrder ID: ${merchantOrderId}`);
 
-    return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/ERROR?TxnId=${TxnId}&merchantOrderId=${merchantOrderId}`);
+    return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/ERROR?TxnId=Null&merchantOrderId=${merchantOrderId}`);
   }
 });
 
@@ -215,10 +215,11 @@ async function sendWebhookMessage(content) {
     console.log("✅ Message sent:", res.status);
   } catch (error) {
     if (error.response && error.response.status === 429) {
-      const retryAfter = error.response.data.retry_after; // in seconds or milliseconds
-      const wait = retryAfter * 1000; // Discord returns seconds sometimes
-      console.warn(`⚠️ Rate limited. Retrying in ${wait}ms...`);
-      setTimeout(() => sendWebhookMessage(content), wait);
+      console.log(error.response.data);
+      // const retryAfter = error.response.data.retry_after; // in seconds or milliseconds
+      // const wait = retryAfter * 1000; // Discord returns seconds sometimes
+      // console.warn(`⚠️ Rate limited. Retrying in ${wait}ms...`);
+      // setTimeout(() => sendWebhookMessage(content), wait);
     } else {
       console.error("❌ Error sending message:", error.message);
     }
