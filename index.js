@@ -172,8 +172,9 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
     }
   );
 
-  const status = response.data.state;
-  const TxnId = response.data?.toObject().paymentDetails?.transactionId;
+  const data = JSON.stringify(response.data, null, 2);
+  const status = data.state;
+  const TxnId = data?.toObject().paymentDetails?.transactionId;
   const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL;
 
   if (status === "COMPLETED") {
@@ -181,7 +182,7 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
     // SEND LOGS VIA DISCORD_WEBHOOK_URL
     if (discordWebhookUrl) {
       const discordMessage = {
-        content: `✅ Payment Successful! ✅\n\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`,
+        content: `✅ Payment Successful! ✅\n\nAmount: ${data.amount / 100},\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`,
       };
       await axios.post(discordWebhookUrl, discordMessage);
     }
@@ -192,7 +193,7 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
     // SEND LOGS VIA DISCORD_WEBHOOK_URL
     if (discordWebhookUrl) {
       const discordMessage = {
-        content: `❌ Payment Failed! ❌\n\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`,
+        content: `❌ Payment Failed! ❌\n\nAmount: ${data.amount / 100},\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`,
       };
       await axios.post(discordWebhookUrl, discordMessage);
     }
@@ -202,7 +203,7 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
     // SEND LOGS VIA DISCORD_WEBHOOK_URL
     if (discordWebhookUrl) {
       const discordMessage = {
-        content: `⏳ Payment Pending! ⏳\n\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`,
+        content: `⏳ Payment Pending! ⏳\n\nAmount: ${data.amount / 100},\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`,
       };
       await axios.post(discordWebhookUrl, discordMessage);
     }
@@ -212,7 +213,7 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
     // SEND LOGS VIA DISCORD_WEBHOOK_URL
     if (discordWebhookUrl) {
       const discordMessage = {
-        content: `❓ Unknown Payment Status! ❓\n\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`,
+        content: `❓ Unknown Payment Status! ❓\n\nAmount: ${data.amount / 100},\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`,
       };
       await axios.post(discordWebhookUrl, discordMessage);
     }
