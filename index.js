@@ -175,84 +175,52 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
   const data = JSON.stringify(response.data, null, 2);
   const status = data.state;
   const TxnId = data?.paymentDetails?.transactionId;
-  const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL;
 
   if (status === "COMPLETED") {
     // Handle successful payment
     // SEND LOGS VIA DISCORD_WEBHOOK_URL
-    if (discordWebhookUrl) {
-      const discordMessage = {
-        content: `✅ Payment Successful! @here ✅\n\n**Amount:** ${data.amount / 100},\n**Transaction ID:** ${TxnId},\n**Order ID:** ${merchantOrderId}\n**Time:** ${new Date().toLocaleString()}`,
-      };
-      const payload = JSON.stringify(discordMessage);
-      await axios.post(discordWebhookUrl, {
-        content: payload.content
-      })
-        .then(response => {
-          console.log('Message sent:', response.status);
-        })
-        .catch(error => {
-          console.error('Error sending message:', error);
-        });
-    }
+    await sendWebhookMessage(`✅ Payment Successful! @here ✅\n\n**Amount:** ${data.amount / 100},\n**Transaction ID:** ${TxnId},\n**Order ID:** ${merchantOrderId}\n**Time:** ${new Date().toLocaleString()}`);
 
     return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/PAYMENT_SUCCESS?TxnId=${TxnId}&merchantOrderId=${merchantOrderId}`);
   } else if (status === "FAILED") {
     // Handle failed payment
     // SEND LOGS VIA DISCORD_WEBHOOK_URL
-    if (discordWebhookUrl) {
-      const discordMessage = {
-        content: `❌ Payment Failed! ❌\n\nAmount: ${data.amount / 100},\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`,
-      };
-      await axios.post(discordWebhookUrl, {
-        content: discordMessage.content
-      })
-        .then(response => {
-          console.log('Message sent:', response.status);
-        })
-        .catch(error => {
-          console.error('Error sending message:', error);
-        });
-    }
+    await sendWebhookMessage(`❌ Payment Failed! ❌\n\nAmount: ${data.amount / 100},\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`);
+
     return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/PAYMENT_ERROR?TxnId=${TxnId}&merchantOrderId=${merchantOrderId}`);
   } else if (status === "PENDING") {
     // Handle pending payment
     // SEND LOGS VIA DISCORD_WEBHOOK_URL
-    if (discordWebhookUrl) {
-      const discordMessage = {
-        content: `⏳ Payment Pending! ⏳\n\nAmount: ${data.amount / 100},\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`,
-      };
-      await axios.post(discordWebhookUrl, {
-        content: discordMessage.content
-      })
-        .then(response => {
-          console.log('Message sent:', response.status);
-        })
-        .catch(error => {
-          console.error('Error sending message:', error);
-        });
-    }
+    await sendWebhookMessage(`⏳ Payment Pending! ⏳\n\nAmount: ${data.amount / 100},\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`);
+
     return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/PAYMENT_PENDING?TxnId=${TxnId}&merchantOrderId=${merchantOrderId}`);
   } else {
     // Handle unknown status
     // SEND LOGS VIA DISCORD_WEBHOOK_URL
-    if (discordWebhookUrl) {
-      const discordMessage = {
-        content: `❓ Unknown Payment Status! ❓\n\nAmount: ${data.amount / 100},\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`,
-      };
-      await axios.post(discordWebhookUrl, {
-        content: discordMessage.content
-      })
-        .then(response => {
-          console.log('Message sent:', response.status);
-        })
-        .catch(error => {
-          console.error('Error sending message:', error);
-        });
-    }
+    await sendWebhookMessage(`❓ Unknown Payment Status! ❓\n\nAmount: ${data.amount / 100},\nTransaction ID: ${TxnId},\nOrder ID: ${merchantOrderId}`);
+
     return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/ERROR?TxnId=${TxnId}&merchantOrderId=${merchantOrderId}`);
   }
 });
 
 const port = process.env.PORT || 3002;
 app.listen(port, () => console.log(`Server running on port ${port}`));
+
+
+async function sendWebhookMessage(content) {
+  try {
+    const res = await axios.post(process.env.DISCORD_WEBHOOK_URL, {
+      content: content,
+    });
+    console.log("✅ Message sent:", res.status);
+  } catch (error) {
+    if (error.response && error.response.status === 429) {
+      const retryAfter = error.response.data.retry_after; // in seconds or milliseconds
+      const wait = retryAfter * 1000; // Discord returns seconds sometimes
+      console.warn(`⚠️ Rate limited. Retrying in ${wait}ms...`);
+      setTimeout(() => sendWebhookMessage(content), wait);
+    } else {
+      console.error("❌ Error sending message:", error.message);
+    }
+  }
+}
