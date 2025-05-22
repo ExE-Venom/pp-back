@@ -174,7 +174,7 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
 
   const data = JSON.stringify(response.data, null, 2);
   const status = data.state;
-  const TxnId = data?.toObject().paymentDetails?.transactionId;
+  const TxnId = data?.paymentDetails?.transactionId;
   const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL;
 
   if (status === "COMPLETED") {
