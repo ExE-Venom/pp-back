@@ -173,13 +173,17 @@ app.get("/payment/status/:merchantOrderId", async (req, res) => {
   );
   console.log("Payment Status Response:", JSON.stringify(response.data, null, 2));
   const status = response.data.state;
-  const TxnId = response.data?.paymentDetails?.transactionId;
+  const TxnId = response.data?.toObject().paymentDetails?.transactionId;
   console.log("Payment Status:", status);
   console.log("Transaction ID:", TxnId);
   if (status === "COMPLETED") {
-    return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/PAYMENT_SUCCESS?TxnId=${TxnId}`);
+    return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/PAYMENT_SUCCESS?TxnId=${TxnId}&merchantOrderId=${merchantOrderId}`);
+  } else if (status === "FAILED") {
+    return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/PAYMENT_ERROR?TxnId=${TxnId}&merchantOrderId=${merchantOrderId}`);
+  } else if (status === "PENDING") {
+    return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/PAYMENT_PENDING?TxnId=${TxnId}&merchantOrderId=${merchantOrderId}`);
   } else {
-    return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/PAYMENT_ERROR?TxnId=${TxnId}`);
+    return res.redirect(`${process.env.APP_FE_URL || "https://store.rexzbot.xyz"}/payment/status/ERROR?TxnId=${TxnId}&merchantOrderId=${merchantOrderId}`);
   }
 });
 
